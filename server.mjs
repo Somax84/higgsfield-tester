@@ -52,7 +52,7 @@ app.post("/api/higgsfield/image-to-video", async (req, res) => {
         "Content-Type": "application/json",
         Authorization: `Key ${HIGGSFIELD_API_KEY}`,
       },
-      body: JSON.stringify({ params: { input_images: [{ url: image_url }], prompt, model } }),
+      body: JSON.stringify({ params: { input_images: [{ type: "url", url: image_url }], prompt, model } }),
     });
     const data = await response.json();
     if (!response.ok) return res.status(502).json(data);

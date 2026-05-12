@@ -16,7 +16,7 @@ app.post("/api/higgsfield/text-to-image", async (req, res) => {
   const { prompt, aspect_ratio = "1:1", webhook_url } = req.body;
   if (!prompt) return res.status(400).json({ error: "prompt is required" });
 
-  const url = new URL("https://platform.higgsfield.ai/v1/generations");
+  const url = new URL("https://platform.higgsfield.ai/google/nano-banana/text-to-image");
   if (webhook_url) url.searchParams.set("hf_webhook", webhook_url);
 
   try {

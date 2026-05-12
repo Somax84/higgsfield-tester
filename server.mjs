@@ -8,7 +8,7 @@ const PORT = process.env.PORT || 3000;
 
 // Health check
 app.get("/health", (req, res) => {
-  res.json({ status: "ok" });
+  res.json({ status: "ok", key_set: !!HIGGSFIELD_API_KEY });
 });
 
 // Text-to-Image (Nano Banana)
@@ -16,24 +16,29 @@ app.post("/api/higgsfield/text-to-image", async (req, res) => {
   const { prompt, aspect_ratio = "1:1", webhook_url } = req.body;
   if (!prompt) return res.status(400).json({ error: "prompt is required" });
 
-  const url = new URL("https://platform.higgsfield.ai/google/nano-banana/text-to-image");
-  if (webhook_url) url.searchParams.set("hf_webhook", webhook_url);
+  const endpoint = "https://platform.higgsfield.ai/nano_banana/text-to-image";
+  const urlObj = new URL(endpoint);
+  if (webhook_url) urlObj.searchParams.set("hf_webhook", webhook_url);
+
+  const payload = { prompt, aspect_ratio };
+  console.log("→ POST", urlObj.toString());
+  console.log("→ payload:", JSON.stringify(payload));
 
   try {
-    const response = await fetch(url.toString(), {
+    const response = await fetch(urlObj.toString(), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Key ${HIGGSFIELD_API_KEY}`,
       },
-      body: JSON.stringify({ model: "nano_banana", prompt, aspect_ratio }),
+      body: JSON.stringify(payload),
     });
     const data = await response.json();
-    console.log("Higgsfield response:", response.status, JSON.stringify(data));
+    console.log("← status:", response.status, JSON.stringify(data));
     if (!response.ok) return res.status(502).json(data);
     res.json({ requestId: data.request_id, statusUrl: data.status_url, cancelUrl: data.cancel_url });
   } catch (err) {
-    console.error("text-to-image error:", err);
+    console.error("error:", err);
     res.status(503).json({ error: err.message });
   }
 });
@@ -44,24 +49,24 @@ app.post("/api/higgsfield/image-to-video", async (req, res) => {
   if (!image_url) return res.status(400).json({ error: "image_url is required" });
   if (!prompt) return res.status(400).json({ error: "prompt is required" });
 
-  const url = new URL("https://platform.higgsfield.ai/v1/image2video/dop");
-  if (webhook_url) url.searchParams.set("hf_webhook", webhook_url);
+  const urlObj = new URL("https://platform.higgsfield.ai/v1/image2video/dop");
+  if (webhook_url) urlObj.searchParams.set("hf_webhook", webhook_url);
 
   try {
-    const response = await fetch(url.toString(), {
+    const response = await fetch(urlObj.toString(), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Key ${HIGGSFIELD_API_KEY}`,
       },
-      body: JSON.stringify({ params: { input_images: [{ type: "image_url", image_url: image_url }], prompt, model } }),
+      body: JSON.stringify({ params: { input_images: [{ type: "image_url", image_url }], prompt, model } }),
     });
     const data = await response.json();
-    console.log("Higgsfield response:", response.status, JSON.stringify(data));
+    console.log("← image-to-video:", response.status, JSON.stringify(data));
     if (!response.ok) return res.status(502).json(data);
     res.json({ requestId: data.request_id, statusUrl: data.status_url, cancelUrl: data.cancel_url });
   } catch (err) {
-    console.error("image-to-video error:", err);
+    console.error("error:", err);
     res.status(503).json({ error: err.message });
   }
 });

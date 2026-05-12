@@ -11,12 +11,12 @@ app.get("/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
-// Text-to-Image
+// Text-to-Image (Nano Banana)
 app.post("/api/higgsfield/text-to-image", async (req, res) => {
   const { prompt, aspect_ratio = "1:1", webhook_url } = req.body;
   if (!prompt) return res.status(400).json({ error: "prompt is required" });
 
-  const url = new URL("https://platform.higgsfield.ai/nano_banana/text-to-image");
+  const url = new URL("https://platform.higgsfield.ai/v1/generations");
   if (webhook_url) url.searchParams.set("hf_webhook", webhook_url);
 
   try {
@@ -26,12 +26,14 @@ app.post("/api/higgsfield/text-to-image", async (req, res) => {
         "Content-Type": "application/json",
         Authorization: `Key ${HIGGSFIELD_API_KEY}`,
       },
-      body: JSON.stringify({ prompt, aspect_ratio }),
+      body: JSON.stringify({ model: "nano_banana", prompt, aspect_ratio }),
     });
     const data = await response.json();
+    console.log("Higgsfield response:", response.status, JSON.stringify(data));
     if (!response.ok) return res.status(502).json(data);
     res.json({ requestId: data.request_id, statusUrl: data.status_url, cancelUrl: data.cancel_url });
   } catch (err) {
+    console.error("text-to-image error:", err);
     res.status(503).json({ error: err.message });
   }
 });
@@ -55,9 +57,11 @@ app.post("/api/higgsfield/image-to-video", async (req, res) => {
       body: JSON.stringify({ params: { input_images: [{ type: "image_url", image_url: image_url }], prompt, model } }),
     });
     const data = await response.json();
+    console.log("Higgsfield response:", response.status, JSON.stringify(data));
     if (!response.ok) return res.status(502).json(data);
     res.json({ requestId: data.request_id, statusUrl: data.status_url, cancelUrl: data.cancel_url });
   } catch (err) {
+    console.error("image-to-video error:", err);
     res.status(503).json({ error: err.message });
   }
 });
